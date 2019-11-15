@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        #mygame {
+            border: 1px solid #000;
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            bottom: 0;
+            margin: auto
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="mygame" width="600" height="600"></canvas>
+    <script>
+
+        class snakegame {
+            //构造函数
+            constructor(mygame, snakehang, snakelie) {
+                //获取上下文对象
+                this.ctx = mygame.getContext('2d');
+                //当前地图的横线数
+                this.snakehang = snakehang;
+                //当前地图的纵线数
+                this.snakelie = snakelie;
+                //当前画布的宽度
+                this.mygameWidth = mygame.width;
+                //当前画布的高度
+                this.mygameHeight = mygame.height;
+                //每一个小块的宽度
+                this.snakeboxwidth = this.mygameWidth / this.snakelie;
+                //每一个小块的高度
+                this.snakeboxheight = this.mygameHeight / this.snakehang;
+                //定时器
+                this.settime1 = null;
+                //蛇的数组
+                this.snakearr = [
+                    { x: 100, y: 100 },
+                    { x: 120, y: 100 },
+                    { x: 140, y: 100 },
+                    { x: 160, y: 100 },
+                    { x: 180, y: 100 },
+                    { x: 200, y: 100 },
+                ]
+                this.snakeHead = {
+
+                }
+                this.direction = 'right'
+                this.dwx = 20;
+                this.dwy = 0;
+                this.foodx = null;
+                this.foody = null;
+
+            }
+
+            //设置地图
+            setMap() {
+                this.ctx.strokeStyle = 'red';
+                for (let i = 1; i < this.snakehang; i++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, i * this.snakeboxheight);
+                    this.ctx.lineTo(this.mygameWidth, i * this.snakeboxheight);
+                    this.ctx.stroke()
+                }
+                for (let i = 1; i < this.snakelie; i++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(i * this.snakeboxwidth, 0);
+                    this.ctx.lineTo(i * this.snakeboxheight, this.mygameHeight);
+                    this.ctx.stroke()
+                }
+
+            }
+            //绘制蛇
+            setsnake() {
+                for (let i = 0; i < this.snakearr.length; i++) {
+                    if (i == this.snakearr.length - 1) {
+                        this.ctx.fillStyle = 'red';
+                        this.snakeHead = this.snakearr[i]
+                    } else {
+                        this.ctx.fillStyle = 'green'
+                    }
+                    this.ctx.fillRect(this.snakearr[i].x + 1, this.snakearr[i].y + 1, this.snakeboxwidth - 2, this.snakeboxheight - 2)
+                }
+            }
+            //开始游戏
+            init() {
+                this.setMap();
+                this.setsnake();
+                this.settime();
+                this.changeDirection()
+                this.food()
+                // this.clearRect()
+            }
+            jungedeg(x, y) {
+                if (x < 0 || x > this.mygameWidth - this.snakeboxwidth || y < 0 || y > this.mygameHeight - this.snakeboxheight) {
+                    return false
+                } else {
+                    for (let i = 0; i < this.snakearr.length; i++) {
+                        if (x == this.snakearr[i].x && y == this.snakearr[i].y) {
+                            return false
+                        }
+                    }
+                    return true
+                }
+            }
+            //设置定时器让蛇进行移动
+            settime() {
+                var that = this;
+                this.settime1 = setInterval(function () {
+
+                    var snakedom = {
+                        x: that.snakeHead.x + that.dwx,
+                        y: that.snakeHead.y + that.dwy,
+                    }
+                    if (that.jungedeg(snakedom.x, snakedom.y)) {
+                        that.clearRect();
+                        if(that.eatFood(that.snakeHead.x,that.snakeHead.y)){
+                            that.food()
+                        }else{
+                            that.snakearr.splice(0, 1);
+                        }
+                        that.snakearr.push(snakedom)
+                        // console.log(that.snakearr)
+                        that.setsnake()
+
+                    } else {
+                        alert('游戏结束!!')
+                        window.location.reload()
+                    }
+
+
+                }, 200)
+            }
+            //吃食物
+            eatFood(x, y) {
+                if(x==this.foodx&&y==this.foody){
+                    return true
+                }
+            }
+            //食物投放
+            food() {
+                var foox = parseInt(Math.random() * this.snakehang)* this.snakeboxwidth;
+                var fooy = parseInt(Math.random() * this.snakelie) * this.snakeboxheight;
+                for(let i = 0;i<this.snakearr.length;i++){
+                    if(foox==this.snakearr[i].x&&fooy==this.snakearr[i].y){
+                        this.food()
+                        
+                    }
+                }
+                this.ctx.fillRect(foox  + 1, fooy + 1, this.snakeboxwidth - 2, this.snakeboxheight - 2)
+                this.foodx = foox;
+                this.foody = fooy;
+                ;
+            }
+            //改变蛇的移动方向
+            changeDirection() {
+                var that = this;
+                window.onkeydown = function (e) {
+                    console.log(e.keyCode);
+                    if (e.keyCode == 37 && that.direction != 'right') {
+                        that.dwx = -20;
+                        that.dwy = 0;
+                        that.direction = 'left'
+                    } else if (e.keyCode == 38 && that.direction != 'down') {
+                        that.dwx = 0;
+                        that.dwy = -20;
+                        that.direction = 'up'
+                    } else if (e.keyCode == 39 && that.direction != 'left') {
+                        that.dwx = 20;
+                        that.dwy = 0;
+                        that.direction = 'right'
+                    } else if (e.keyCode == 40 && that.direction != 'up') {
+                        that.dwx = 0;
+                        that.dwy = 20;
+                        that.direction = 'down'
+                    }
+                }
+            }
+            //清除原来的蛇里面数组的方块
+            clearRect() {
+                for (let i = 0; i < this.snakearr.length; i++) {
+                    this.ctx.clearRect(this.snakearr[i].x + 1, this.snakearr[i].y + 1, this.snakeboxwidth - 2, this.snakeboxheight - 2)
+                }
+            }
+            //结束游戏
+            stop() {
+
+            }
+        }
+        var mygame = document.getElementById('mygame')
+        var newgame = new snakegame(mygame, 30, 30)
+        newgame.init()
+
+
+    </script>
+</body>
+
+</html>
